@@ -1,47 +1,49 @@
-version: '3'
+version: '3.3'
+
 services:
-  wordpress:
-    image: wordpress
+  db:
+    image: mysql:5.7
+    ports:
+      - "3306:3306"    
+    volumes:
+      - ./database:/var/lib/mysql
     restart: always
-    links:
-     - mysql
-    ports:
-     - "80:80"
     environment:
-     - WORDPRESS_DB_HOST=mysql
-     - WORDPRESS_DB_USER=user
-     - WORDPRESS_DB_PASSWORD=password
-     - WORDPRESS_DB_NAME=wp
-    volumes:
-     - ./www:/var/www/html
+      MYSQL_ROOT_PASSWORD: somewordpress
+      MYSQL_DATABASE: wordpress
+      MYSQL_USER: wordpress
+      MYSQL_PASSWORD: wordpress
+
+  wordpress:
     depends_on:
-     - mysql
-  
-  mysql:
-    image: mysql
+      - db
+    image: wordpress:latest
     ports:
-     - "3306:3306"
+      - "8000:80"
+    restart: always
     environment:
-     - MYSQL_DATABASE=wp
-     - MYSQL_USER=user
-     - MYSQL_PASSWORD=password
-     - MYSQL_ROOT_PASSWORD=12345678
+      WORDPRESS_DB_HOST: db:3306
+      WORDPRESS_DB_USER: wordpress
+      WORDPRESS_DB_PASSWORD: wordpress
+      WORDPRESS_DB_NAME: wordpress
+      WORDPRESS_TABLE_PREFIX: wp_
     volumes:
-     - ./database:/var/lib/mysql
-     - ./init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+      - ./www:/var/www/html
+      - ./php/uploads.ini:/usr/local/etc/php/conf.d/uploads.ini
   
   phpmyadmin:
     image: phpmyadmin/phpmyadmin
     links:
-     - mysql
+     - db
     ports:
      - "81:80"
     environment:
-     - PMA_HOST=mysql
-     - MYSQL_ROOT_PASSWORD=12345678
-     - MYSQL_USER=user
-     - MYSQL_PASSWORD=password
+       PMA_HOST: db:3306
+       MYSQL_ROOT_PASSWORD: somewordpress
+       MYSQL_USER: wordpress
+       MYSQL_USERNAME: wordpress
+       MYSQL_PASSWORD: wordpress
     volumes:
      - ./phpmyadmin:/var/www/html
     depends_on:
-     - mysql
+     - db
